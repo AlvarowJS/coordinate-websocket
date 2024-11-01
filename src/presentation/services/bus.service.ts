@@ -7,23 +7,41 @@ export class BusService {
         private readonly wssService = WssService.instance,
     ) { }
 
-    public readonly workingOnBuses: Coordinate[] = []
+    public readonly workingOnBuses: { bus: string, coordinate: Coordinate }[] = []; // Cambiado a un array de objetos con el identificador del bus y coordenadas
 
-    public get workingOnTickets(): Coordinate[] {
-        return this.workingOnBuses
-    }
-
-
-    public busCordenate: Coordinate[] = [
-        { lat: 40.7128, lng: -74.0060 }
+    // Lista de buses y su estado
+    public buses: { bus: string, estado: boolean, coordinate?: Coordinate }[] = [
+        { bus: 'xyz', estado: true },
+        { bus: 'yzs', estado: true },
+        { bus: 'abc', estado: false },
     ];
 
-    public createBusCoordinate(coordinate: Coordinate) {
-        this.busCordenate[0] = coordinate;
-        this.onBusCoordinateChange();
+    // Método para agregar coordenadas de un bus activo
+    public createBusCoordinate(coordinate: Coordinate, busId: string) {
+        const bus = this.buses.find(b => b.bus === busId && b.estado);
+        if (bus) {
+            bus.coordinate = coordinate;
+
+            // Actualizamos la lista de buses en trabajo
+            const existingBus = this.workingOnBuses.find(b => b.bus === busId);
+            if (existingBus) {
+                existingBus.coordinate = coordinate;
+            } else {
+                this.workingOnBuses.push({ bus: busId, coordinate });
+            }
+
+            // Llamamos al método para notificar el cambio de coordenadas
+            this.onBusCoordinateChange();
+        }
     }
 
+    // Método privado para enviar las coordenadas de cada bus activo individualmente
     private onBusCoordinateChange() {
-        this.wssService.sendMessage('on-bus-coordinate-changed', this.workingOnBuses);
+        this.workingOnBuses.forEach(activeBus => {
+            this.wssService.sendMessage('on-bus-coordinate-changed', {
+                bus: activeBus.bus,
+                coordinate: activeBus.coordinate
+            });
+        });
     }
 }
