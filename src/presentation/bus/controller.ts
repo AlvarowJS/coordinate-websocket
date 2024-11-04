@@ -8,7 +8,7 @@ export class BusController {
 
 
     public getBusCoordinate = async (req: Request, res: Response) => {
-        res.json(this.busService.busCordenate);
+        res.json(this.busService.buses);
     }
 
     public sendBusCoordinate = async (req: Request, res: Response) => {
