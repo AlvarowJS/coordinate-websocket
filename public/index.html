@@ -1,11 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>WebSocket Client</title>
 </head>
+
 <body>
-  <h1>Tú eres increíble</h1>
+  <h1>WebSocket Client</h1>
+  <input type="text" id="busName" placeholder="Ingrese el nombre del bus" />
+  <input type="number" id="coordinateX" placeholder="Ingrese coordenada X" />
+  <input type="number" id="coordinateY" placeholder="Ingrese coordenada Y" />
+  <button id="sendButton">Enviar</button>
+
+  <h2>Mensajes recibidos:</h2>
+  <div id="messages"></div> <!-- Contenedor para mostrar los mensajes -->
+  <p id="busName">Bus:</p>
+  <p id="axisx">X:</p>
+  <p id="axisy">Y:</p>
+  <script>
+    // Conectarse al WebSocket en la misma ruta que se define en tu servidor
+    const socket = new WebSocket('ws://localhost:3000/ws');
+
+    // Evento que se ejecuta cuando la conexión se abre
+    socket.onopen = () => {
+      console.log('Conexión WebSocket establecida');
+    };
+
+    socket.onmessage = (event) => {
+      console.log('Mensaje recibido del servidor:', event.data);
+      try {
+        const data = JSON.parse(event.data);
+        document.getElementById('busName').innerText = data.payload.bus;
+        document.getElementById('axisx').innerText = data.payload.x;
+        document.getElementById('axisy').innerText = data.payload.y;
+    } catch (error) {
+        console.error('Error al parsear el mensaje:', error);
+    }
+    };
+
+    // Evento que se ejecuta cuando ocurre un error
+    socket.onerror = (error) => {
+      console.error('Error en la conexión WebSocket:', error);
+    };
+
+    // Evento que se ejecuta cuando la conexión se cierra
+    socket.onclose = () => {
+      console.log('Conexión WebSocket cerrada');
+    };
+
+    // Enviar datos al WebSocket cuando se hace clic en el botón
+    document.getElementById('sendButton').addEventListener('click', () => {
+      const busName = document.getElementById('busName').value;
+      const x = document.getElementById('coordinateX').value;
+      const y = document.getElementById('coordinateY').value;
+
+      if (busName && x && y) {
+        // Crear un objeto con el tipo y los datos
+        const message = {
+          type: 'update-bus-coordinate', // Tipo de mensaje, puede ser cualquier valor que reconozca tu servidor
+          payload: {
+            bus: busName, // Nombre del bus
+            x: parseFloat(x), // Coordenada X convertida a número
+            y: parseFloat(y) // Coordenada Y convertida a número
+          }
+        };
+
+        // Enviar el mensaje al servidor WebSocket en formato JSON
+        socket.send(JSON.stringify(message));
+        console.log('Mensaje enviado:', message);
+      } else {
+        alert('Por favor, complete todos los campos antes de enviar.');
+      }
+    });
+  </script>
 </body>
+
 </html>

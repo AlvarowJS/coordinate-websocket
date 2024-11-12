@@ -30,7 +30,7 @@ export class WssService {
     static initWss(options: Options) {
         WssService._instance = new WssService(options);
     }
-    
+
     public sendMessage(type: string, payload: Object) {
         this.wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
@@ -38,12 +38,22 @@ export class WssService {
             }
         })
     }
-    
+
     public start() {
         this.wss.on('connection', (ws: WebSocket) => {
             console.log('Client connected');
 
             ws.on('close', () => console.log('Client Disconnect'))
+
+            ws.on('message', (message) => {                
+                try {
+                    const parsedMessage = JSON.parse(message.toString());
+                    const { type, payload } = parsedMessage;                    
+                    this.sendMessage(type, payload)
+                } catch (error) {
+                    console.error('Error al parsear el mensaje:', error);
+                }
+            });
         })
     }
 
